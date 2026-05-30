@@ -1,0 +1,14 @@
+table inet ssh_guard {
+    chain input_pre_ufw {
+        type filter hook input priority -10; policy accept;
+
+        # Não interfere em conexões já estabelecidas
+        ct state established,related accept
+
+        # Rate limit de novas conexões SSH IPv4 vindas da LAN
+        ip saddr 192.168.1.0/24 tcp dport 22 ct state new limit rate 10/minute burst 5 packets counter accept
+
+        # Acima do limite: loga e descarta
+        ip saddr 192.168.1.0/24 tcp dport 22 ct state new counter log prefix "NFT SSH RATE DROP: " drop
+    }
+}
